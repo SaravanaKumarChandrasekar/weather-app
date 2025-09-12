@@ -27,6 +27,7 @@ jobs:
       - name: Run tests
         env:
           OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+          PYTHONPATH: ${{ github.workspace }}
         run: pytest
 
 
