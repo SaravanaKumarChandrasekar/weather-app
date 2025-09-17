@@ -1,0 +1,18 @@
+version: "3.8"
+services:
+  weather-app:
+    build: ./backend
+    env_file: .env
+    # optional: expose to host only if you need Postman/curl from host:
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+
+  weather-dashboard:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - weather-app
+    restart: unless-stopped
+

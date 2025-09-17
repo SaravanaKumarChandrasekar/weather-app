@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Weather App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #4facfe, #00f2fe);
+      color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      background: #fff;
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      text-align: center;
+      width: 420px;
+      max-height: 95vh;
+      overflow-y: auto;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      color: #0077ff;
+    }
+
+    input {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      width: 65%;
+    }
+
+    button {
+      padding: 10px 15px;
+      margin-left: 10px;
+      border: none;
+      border-radius: 8px;
+      background: #0077ff;
+      color: white;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #005fcc;
+    }
+
+    .card {
+      margin-top: 20px;
+      padding: 20px;
+      background: #f5f9ff;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .card img {
+      width: 80px;
+      height: 80px;
+    }
+
+    .temp {
+      font-size: 2em;
+      margin: 10px 0;
+    }
+
+    .desc {
+      font-size: 1.2em;
+      text-transform: capitalize;
+    }
+
+    .forecast {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+      gap: 8px;
+    }
+
+    .forecast-day {
+      background: #e9f2ff;
+      border-radius: 10px;
+      padding: 10px;
+      width: 70px;
+      text-align: center;
+      font-size: 0.9em;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .forecast-day img {
+      width: 50px;
+      height: 50px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🌤️ Weather App</h1>
+    
+    <input type="text" id="city" placeholder="Enter city...">
+    <button onclick="getWeather()">Search</button>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+    async function getWeather() {
+      const city = document.getElementById("city").value;
+      if (!city) {
+        alert("Please enter a city name!");
+        return;
+      }
+
+      try {
+        // Current weather
+        const currentRes = await fetch(`/api/weather?q=${city}`);
+        if (!currentRes.ok) throw new Error("City not found");
+        const currentData = await currentRes.json();
+
+        const icon = currentData.weather[0].icon;
+        const iconUrl = `https://openweathermap.org/img/wn/${icon}@2x.png`;
+
+        // Forecast (5-day, every 3h → we pick one per day ~12:00)
+        const forecastRes = await fetch(`/api/forecast?q=${city}`);
+        const forecastData = await forecastRes.json();
+        const daily = forecastData.list.filter(item => item.dt_txt.includes("12:00:00"));
+
+        // Build forecast cards
+        let forecastHTML = `<div class="forecast">`;
+        daily.slice(0, 5).forEach(day => {
+          const date = new Date(day.dt_txt).toLocaleDateString("en-US", { weekday: "short" });
+          const dayIcon = `https://openweathermap.org/img/wn/${day.weather[0].icon}@2x.png`;
+          forecastHTML += `
+            <div class="forecast-day">
+              <div>${date}</div>
+              <img src="${dayIcon}" alt="icon">
+              <div>${Math.round(day.main.temp)}°C</div>
+            </div>
+          `;
+        });
+        forecastHTML += `</div>`;
+
+        // Final render
+        document.getElementById("result").innerHTML = `
+          <div class="card">
+            <h2>${currentData.name}, ${currentData.sys.country}</h2>
+            <img src="${iconUrl}" alt="Weather icon">
+            <div class="temp">${currentData.main.temp} °C</div>
+            <div class="desc">${currentData.weather[0].description}</div>
+            <p>Humidity: ${currentData.main.humidity}% | Wind: ${currentData.wind.speed} m/s</p>
+          </div>
+          ${forecastHTML}
+        `;
+      } catch (error) {
+        document.getElementById("result").innerHTML = 
+          `<p style="color:red;">❌ Error: ${error.message}</p>`;
+      }
+    }
+  </script>
+</body>
+</html>
+
