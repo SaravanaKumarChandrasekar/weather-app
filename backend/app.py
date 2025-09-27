@@ -1,11 +1,14 @@
 from flask import Flask, request, jsonify
+from prometheus_flask_exporter import PrometheusMetrics
 import requests
 import os
+
 
 app = Flask(__name__)
 
 # Load API key from environment variable (set in docker-compose.yml)
 API_KEY = os.getenv("OPENWEATHER_API_KEY")
+metrics = PrometheusMetrics(app)
 
 @app.route('/weather')
 def weather():
